@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Your Cart - C&N Bakery</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #ff8fab;
+            --primary-dark: #fb6f92;
+            --secondary: #ffe5ec;
+            --text-dark: #4a4a4a;
+            --white: #ffffff;
+            --bg: #fffbfb;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-dark); line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        /* Header */
+        header {
+            background: var(--white);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .nav-flex { display: flex; justify-content: space-between; align-items: center; }
+        .logo-text { font-size: 24px; font-weight: 700; color: var(--text-dark); text-decoration: none; }
+        .logo-text span { color: var(--primary); }
+        nav ul { display: flex; list-style: none; gap: 30px; }
+        nav ul li a { text-decoration: none; color: var(--text-dark); font-weight: 500; transition: 0.3s; }
+        nav ul li a:hover { color: var(--primary); }
+        .auth-area { display: flex; align-items: center; gap: 20px; }
+        .nav-icons { display: flex; gap: 20px; align-items: center; }
+        .nav-icons i { cursor: pointer; font-size: 1.2rem; color: var(--text-dark); transition: 0.3s; position: relative; }
+        .nav-icons i:hover { color: var(--primary); }
+        #cart-count-header {
+            position: absolute; top: -8px; right: -10px;
+            background: var(--primary-dark); color: white;
+            font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; font-style: normal;
+        }
+
+        /* Cart Layout */
+        h1.page-title { text-align: center; margin: 40px 0; font-size: 2.5rem; color: var(--text-dark); }
+        h1.page-title span { color: var(--primary); }
+        .cart-container { max-width: 1000px; margin: 0 auto 80px; }
+        .cart-grid { display: grid; grid-template-columns: 1fr 350px; gap: 30px; }
+        .cart-items-list { display: flex; flex-direction: column; gap: 20px; }
+
+        /* NEW: Checkbox Styles */
+        .cart-item-wrapper { display: flex; align-items: center; gap: 15px; }
+        .item-checkbox {
+            width: 22px; height: 22px; cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        /* Cart Item Card */
+        .cart-item {
+            flex: 1;
+            background: white; border-radius: 20px; padding: 20px;
+            display: flex; gap: 20px; align-items: center; box-shadow: var(--shadow);
+        }
+        .cart-item img { width: 110px; height: 110px; object-fit: cover; border-radius: 15px; background: var(--secondary); }
+        .item-details { flex: 1; }
+        .item-details h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--text-dark); }
+        .custom-info { font-size: 0.85rem; color: #888; margin-bottom: 10px; }
+        .price-row { display: flex; justify-content: space-between; align-items: center; }
+        .price { font-weight: 700; color: var(--primary-dark); font-size: 1.2rem; }
+        .quantity-controls {
+            display: flex; align-items: center; background: #f8f8f8;
+            border-radius: 50px; padding: 5px 15px; gap: 15px;
+        }
+        .quantity-controls button { border: none; background: none; cursor: pointer; font-size: 1.2rem; color: var(--primary); font-weight: bold; }
+        .remove-btn { color: #ffb3b3; border: none; background: none; cursor: pointer; font-size: 0.9rem; margin-top: 10px; }
+        .remove-btn:hover { color: #ff4d4d; }
+
+        /* Summary Sidebar */
+        .cart-summary {
+            background: white; padding: 30px; border-radius: 25px;
+            box-shadow: var(--shadow); height: fit-content; position: sticky; top: 100px;
+        }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 500; }
+        .summary-total {
+            border-top: 2px dashed #eee; margin-top: 20px; padding-top: 20px;
+            font-size: 1.3rem; font-weight: 700; color: var(--primary-dark);
+        }
+        .btn-primary {
+            background: var(--primary); color: white; border: none; padding: 15px;
+            border-radius: 50px; width: 100%; font-weight: 600; cursor: pointer; transition: 0.3s;
+        }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .btn-primary:not(:disabled):hover { background: var(--primary-dark); transform: translateY(-2px); }
+
+        .empty-cart { text-align: center; padding: 60px; background: white; border-radius: 30px; grid-column: span 2; }
+        .empty-cart i { font-size: 4rem; color: var(--secondary); margin-bottom: 20px; }
+
+        @media (max-width: 850px) { .cart-grid { grid-template-columns: 1fr; } .cart-summary { position: static; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container nav-flex">
+            <a href="index.html" class="logo-text">C&N <span>Bakery</span></a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="auth-area">
+                <div class="nav-icons">
+                    <i class="fas fa-shopping-cart" onclick="location.href='cart.html'">
+                        <span id="cart-count-header">0</span>
+                    </i>
+                    <i class="fas fa-user-circle" onclick="location.href='user.html'"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">Your <span>Sweet Cart</span></h1>
+        <div class="cart-container">
+            <div id="cart-grid-wrapper" class="cart-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const gridWrapper = document.getElementById('cart-grid-wrapper');
+        const countHeader = document.getElementById('cart-count-header');
+
+        // Track selected items indices
+        let selectedIndices = [];
+
+        function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+        function saveCart(cart) { 
+            localStorage.setItem('cart', JSON.stringify(cart)); 
+            updateHeaderCount(); 
+        }
+
+        function updateHeaderCount() {
+            const cart = getCart();
+            const count = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            if (countHeader) countHeader.textContent = count;
+        }
+
+        function toggleSelect(index) {
+            const pos = selectedIndices.indexOf(index);
+            if (pos > -1) {
+                selectedIndices.splice(pos, 1);
+            } else {
+                selectedIndices.push(index);
+            }
+            renderCart(false); // Re-render only parts needed (or full render to keep it simple)
+        }
+
+        function renderCart(resetSelection = true) {
+            const cart = getCart();
+            gridWrapper.innerHTML = '';
+
+            // If we are doing a fresh render (like on load or after a delete), reset selections
+            if(resetSelection) selectedIndices = [];
+
+            if (cart.length === 0) {
+                gridWrapper.innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fas fa-cookie-bite"></i>
+                        <h2>Your cart is empty</h2>
+                        <button class="btn-primary" onclick="location.href='menu.html'" style="width:auto; padding:12px 40px; margin-top:20px;">Browse Menu</button>
+                    </div>`;
+                return;
+            }
+
+            const itemsList = document.createElement('div');
+            itemsList.className = 'cart-items-list';
+            let selectedSubtotal = 0;
+
+            cart.forEach((item, index) => {
+                const isChecked = selectedIndices.includes(index);
+                const itemTotal = (item.price || 0) * (item.quantity || 1);
+                
+                if (isChecked) selectedSubtotal += itemTotal;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'cart-item-wrapper';
+                wrapper.innerHTML = `
+                    <input type="checkbox" class="item-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelect(${index})">
+                    <div class="cart-item">
+                        <img src="${item.image || 'https://via.placeholder.com/110?text=Cake'}" alt="${item.name}">
+                        <div class="item-details">
+                            <h3>${item.name}</h3>
+                            ${item.customDetails ? `
+                                <p class="custom-info">🍰 ${item.customDetails.flavor} | 🍦 ${item.customDetails.frosting}</p>
+                            ` : '<p class="custom-info">Freshly baked daily</p>'}
+                            <div class="price-row">
+                                <div class="price">₱${Number(itemTotal).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                                <div class="quantity-controls">
+                                    <button onclick="changeQuantity(${index}, -1)">−</button>
+                                    <span>${item.quantity || 1}</span>
+                                    <button onclick="changeQuantity(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                            <button class="remove-btn" onclick="removeItem(${index})"><i class="fas fa-trash-alt"></i> Remove</button>
+                        </div>
+                    </div>`;
+                itemsList.appendChild(wrapper);
+            });
+
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'cart-summary';
+            summaryDiv.innerHTML = `
+                <h2 style="margin-bottom:20px;">Order Summary</h2>
+                <div class="summary-row">
+                    <span>Selected Items</span>
+                    <span>${selectedIndices.length}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>₱${selectedSubtotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total Amount</span>
+                    <span>₱${selectedSubtotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                </div>
+                <button class="btn-primary" 
+                        ${selectedIndices.length === 0 ? 'disabled' : ''} 
+                        onclick="proceedToCheckout()">
+                    Proceed to Checkout (${selectedIndices.length})
+                </button>
+                <p style="text-align:center; font-size:0.8rem; color:#bbb; margin-top:15px;">
+                    ${selectedIndices.length === 0 ? 'Please select items to checkout' : 'Shipping calculated at next step'}
+                </p>
+            `;
+
+            gridWrapper.appendChild(itemsList);
+            gridWrapper.appendChild(summaryDiv);
+        }
+
+        window.changeQuantity = function(index, delta) {
+            let cart = getCart();
+            cart[index].quantity = Math.max(1, (cart[index].quantity || 1) + delta);
+            saveCart(cart);
+            renderCart(false); // Keep selections when changing quantity
+        };
+
+        window.removeItem = function(index) {
+            let cart = getCart();
+            cart.splice(index, 1);
+            saveCart(cart);
+            renderCart(true); // Reset selections because indices have changed
+        };
+
+        window.proceedToCheckout = function() {
+            const cart = getCart();
+            // Filter only selected items to pass to checkout
+            const itemsToBuy = selectedIndices.map(index => cart[index]);
+            localStorage.setItem('checkoutItems', JSON.stringify(itemsToBuy));
+            location.href = 'checkout.html';
+        };
+
+        renderCart();
+        updateHeaderCount();
+    </script>
+</body>
+</html>
