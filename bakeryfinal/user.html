@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C&N Bakery - My Account</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #ff8fab;
+      --primary-dark: #fb6f92;
+      --secondary: #ffe5ec;
+      --text-dark: #4a4a4a;
+      --white: #ffffff;
+      --bg: #fffbfb;
+      --shadow: 0 10px 30px rgba(0,0,0,0.05);
+      --gray: #f0f0f0;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background-color: var(--bg); color: var(--text-dark); line-height: 1.6; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    .hidden { display: none !important; }
+
+    /* Header Styling */
+    header {
+      background: var(--white);
+      padding: 15px 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .nav-flex { display: flex; justify-content: space-between; align-items: center; }
+    .logo-text { font-size: 24px; font-weight: 700; color: var(--text-dark); text-decoration: none; }
+    .logo-text span { color: var(--primary); }
+    nav ul { display: flex; list-style: none; gap: 30px; }
+    nav ul li a { text-decoration: none; color: var(--text-dark); font-weight: 500; transition: 0.3s; }
+    nav ul li a:hover, nav ul li a.active { color: var(--primary); }
+    
+    .auth-area { display: flex; align-items: center; gap: 20px; }
+    .nav-icons { display: flex; gap: 20px; align-items: center; }
+    .nav-icons i { cursor: pointer; font-size: 1.2rem; color: var(--text-dark); transition: 0.3s; position: relative; }
+    #cart-count-header {
+      position: absolute; top: -8px; right: -10px;
+      background: var(--primary-dark); color: white;
+      font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; font-style: normal;
+    }
+    #user-name-display { font-weight: 600; color: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); padding: 8px 20px; border-radius: 50px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+    .btn-outline:hover { background: var(--primary); color: white; }
+
+    /* Main Content Layout */
+    .main-content { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .welcome-header { margin-bottom: 40px; }
+    .welcome-header h1 { font-size: 2.2rem; color: var(--text-dark); }
+    .welcome-header h1 span { color: var(--primary); }
+
+    h2 { font-size: 1.4rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    h2 i { color: var(--primary); }
+
+    /* Track Order Section */
+    .order-card { 
+      background: white; 
+      border-radius: 25px; 
+      padding: 30px; 
+      box-shadow: var(--shadow); 
+      margin-bottom: 40px; 
+      border: 1px solid var(--secondary);
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .pending-status { text-align: center; padding: 20px 0; }
+    .pending-status i { font-size: 3rem; color: #f1c40f; margin-bottom: 15px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    /* Stepper Styling */
+    .status-stepper { display: flex; justify-content: space-between; margin-top: 40px; position: relative; }
+    .status-stepper::before { 
+      content: ""; position: absolute; top: 20px; left: 0; width: 100%; height: 4px; 
+      background: var(--gray); z-index: 1; 
+    }
+    
+    .step { position: relative; z-index: 2; text-align: center; flex: 1; }
+    .step-icon { 
+      width: 45px; height: 45px; background: var(--gray); border-radius: 50%; 
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; 
+      color: white; transition: 0.5s; font-size: 1.1rem;
+    }
+    .step.completed .step-icon, .step.active .step-icon { background: var(--primary); }
+    .step.active .step-icon { box-shadow: 0 0 15px rgba(255, 143, 171, 0.7); transform: scale(1.1); }
+    .step.active .step-text { color: var(--primary-dark); font-weight: 600; }
+    .step-text { font-size: 0.8rem; color: #aaa; }
+
+    /* History & Recommendations (Same as your beautiful design) */
+    .history-card { background: white; border-radius: 20px; padding: 10px; box-shadow: var(--shadow); margin-bottom: 40px; }
+    .history-item { display: flex; justify-content: space-between; padding: 20px; border-bottom: 1px solid var(--bg); align-items: center; }
+    .history-item:last-child { border-bottom: none; }
+    .history-price { font-weight: 700; color: var(--primary-dark); }
+    .badge-completed { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 600; }
+
+    .recommend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+    .rec-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--secondary); }
+    .rec-card img { width: 100%; height: 160px; object-fit: cover; }
+    .rec-card-body { padding: 15px; text-align: center; }
+    .btn-sm { background: var(--primary); color: white; border: none; padding: 6px 15px; border-radius: 50px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+
+    @media (max-width: 600px) {
+      .status-stepper::before { top: 15px; }
+      .step-icon { width: 30px; height: 30px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container nav-flex">
+    <a href="index.html" class="logo-text">C&N <span>Bakery</span></a>
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="menu.html">Menu</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <div class="auth-area">
+      <div class="nav-icons">
+        <i class="fas fa-shopping-cart" title="Cart" onclick="location.href='cart.html'">
+          <span id="cart-count-header">0</span>
+        </i>
+        <i class="fas fa-user-circle" title="Account" style="color: var(--primary);"></i>
+      </div>
+      <span id="user-name-display"></span>
+      <button class="btn-outline" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="main-content">
+  <div class="welcome-header">
+    <h1>Hello, <span id="display-name">Sweet Tooth</span>! 🧁</h1>
+    <p>Check your order status below.</p>
+  </div>
+
+  <section id="active-order-section">
+    <h2><i class="fas fa-shopping-bag"></i> Active Order</h2>
+    
+    <div class="order-card" id="order-container">
+      <div id="no-order" class="pending-status">
+        <p>No active orders found. Time for some cake?</p>
+        <button class="btn-sm" onclick="location.href='menu.html'" style="margin-top:10px;">Browse Menu</button>
+      </div>
+
+      <div id="status-pending" class="pending-status hidden">
+        <i class="fas fa-clock"></i>
+        <h3>Order Received!</h3>
+        <p>Waiting for the baker to approve your order. We'll start baking soon!</p>
+      </div>
+
+      <div id="status-tracking" class="hidden">
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span id="order-id-display" style="font-weight:600; color:var(--primary-dark)">Order #----</span>
+          <span id="order-status-badge" class="badge-completed" style="background:var(--secondary); color:var(--primary-dark)">Processing</span>
+        </div>
+
+        <div class="status-stepper">
+          <div class="step" id="step-preparing">
+            <div class="step-icon"><i class="fas fa-utensils"></i></div>
+            <div class="step-text">Preparing</div>
+          </div>
+          <div class="step" id="step-baking">
+            <div class="step-icon"><i class="fas fa-fire-burner"></i></div>
+            <div class="step-text">Baking</div>
+          </div>
+          <div class="step" id="step-packing">
+            <div class="step-icon"><i class="fas fa-box"></i></div>
+            <div class="step-text">Packing</div>
+          </div>
+          <div class="step" id="step-delivery">
+            <div class="step-icon"><i class="fas fa-truck"></i></div>
+            <div class="step-text">Delivery</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="history">
+    <h2><i class="fas fa-history"></i> Recent History</h2>
+    <div class="history-card">
+      <div class="history-item">
+        <div class="history-info">
+          <h4>Chocolate Dream Cake</h4>
+          <p class="history-date">Feb 20, 2026</p>
+        </div>
+        <div class="history-price">₱1,200.00</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="recommendations">
+    <h2><i class="fas fa-heart"></i> Suggested for You</h2>
+    <div class="recommend-grid">
+      <div class="rec-card">
+        <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=300&q=80">
+        <div class="rec-card-body">
+          <h4>Red Velvet Special</h4>
+          <button class="btn-sm" onclick="location.href='menu.html'">View Menu</button>
+        </div>
+      </div>
+      <div class="rec-card">
+        <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=300&q=80">
+        <div class="rec-card-body">
+          <h4>Butter Croissant</h4>
+          <button class="btn-sm" onclick="location.href='menu.html'">View Menu</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWUJfDwLR5erpExZUoBWW7YJ-aDpT_zy0",
+    authDomain: "candn-bakery.firebaseapp.com",
+    databaseURL: "https://candn-bakery-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "candn-bakery",
+    storageBucket: "candn-bakery.appspot.com",
+    messagingSenderId: "620414447517",
+    appId: "1:620414447517:web:d42c5d50a91ff41e5ac974"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // 1. Fetch User Profile
+      const userRef = ref(db, 'users/' + user.uid);
+      const snap = await get(userRef);
+      if (snap.exists()) {
+        const name = snap.val().name;
+        document.getElementById('user-name-display').textContent = "Hi, " + name;
+        document.getElementById('display-name').textContent = name;
+      }
+
+      // 2. Listen for Real-Time Order Updates
+      const orderRef = ref(db, 'orders/' + user.uid + '/latest');
+      onValue(orderRef, (snapshot) => {
+        const order = snapshot.val();
+        const noOrderDiv = document.getElementById('no-order');
+        const pendingDiv = document.getElementById('status-pending');
+        const trackingDiv = document.getElementById('status-tracking');
+
+        if (!order) {
+            noOrderDiv.classList.remove('hidden');
+            return;
+        }
+
+        noOrderDiv.classList.add('hidden');
+        document.getElementById('order-id-display').textContent = "Order #" + (order.orderId || '8821');
+
+        if (order.status === 'pending') {
+          pendingDiv.classList.remove('hidden');
+          trackingDiv.classList.add('hidden');
+        } else {
+          pendingDiv.classList.add('hidden');
+          trackingDiv.classList.remove('hidden');
+          updateStepper(order.status);
+        }
+      });
+
+    } else {
+      window.location.href = "index.html";
+    }
+  });
+
+  function updateStepper(status) {
+    const steps = ['preparing', 'baking', 'packing', 'delivery'];
+    const statusIndex = steps.indexOf(status.toLowerCase());
+    
+    steps.forEach((s, index) => {
+      const el = document.getElementById('step-' + s);
+      el.classList.remove('active', 'completed');
+      
+      if (index < statusIndex) {
+        el.classList.add('completed');
+      } else if (index === statusIndex) {
+        el.classList.add('active');
+        document.getElementById('order-status-badge').textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      }
+    });
+  }
+
+  window.handleLogout = () => {
+    signOut(auth).then(() => { window.location.href = "index.html"; });
+  };
+
+  function updateHeaderCount() {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const count = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    document.getElementById('cart-count-header').textContent = count;
+  }
+  updateHeaderCount();
+</script>
+
+</body>
+</html>
