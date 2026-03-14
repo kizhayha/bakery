@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>C&N Bakery - Our Sweet Menu</title>
+  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <link rel="stylesheet" href="css/menu.css">
+</head>
+<body>
+  <header>
+    <div class="container nav-flex">
+      <a href="index.html" class="logo-text">C&N <span>Bakery</span></a>
+      
+      <div class="burger" id="burger-toggle"><i class="fas fa-bars"></i></div>
+      <ul class="nav-links" id="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="menu.html" class="active">Menu</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        
+        <div class="auth-area">
+          <div class="nav-icons">
+            <i class="fas fa-shopping-cart" title="Cart" onclick="checkAuth(event)">
+              <span id="cart-count-header">0</span>
+            </i>
+            <i class="fas fa-user-circle" title="Account" onclick="checkAuth(event)"></i>
+          </div>
+          <span id="user-name-display"></span>
+          <button id="signup-trigger" class="btn-primary" onclick="window.location.href='index.html'">Sign Up</button>
+          <button id="logout-trigger" class="btn-outline hidden" onclick="handleLogout()">Logout</button>
+        </div>
+      </ul>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="menu-header" style="margin-top: 30px;">
+      <h1>Our <span>Sweet Menu</span></h1>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-box">
+        <label><i class="fas fa-coins"></i> Budget Max: ₱</label>
+        <input type="number" id="price-limit" placeholder="Any" min="0">
+      </div>
+    </div>
+
+    <div class="categories">
+      <button class="category-btn active" data-category="cakes">Cakes</button>
+      <button class="category-btn" data-category="pastries">Pastries</button>
+      <button class="category-btn" data-category="custom">Custom Cakes</button>
+    </div>
+
+    <div class="product-grid" id="product-grid"></div>
+  </div>
+
+  <div id="productModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" id="closeModal">&times;</span>
+      <img id="modalImg" src="" style="width:100%; height:280px; object-fit:cover;">
+      <div class="modal-body">
+        <h2 id="modalTitle"></h2>
+        <div class="modal-price" id="modalPrice"></div>
+        <p class="modal-desc" id="modalDesc"></p>
+        <button id="modalAddToCart" class="btn-add">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWUJfDwLR5erpExZUoBWW7YJ-aDpT_zy0",
+      authDomain: "candn-bakery.firebaseapp.com",
+      databaseURL: "https://candn-bakery-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "candn-bakery",
+      storageBucket: "candn-bakery.appspot.com",
+      messagingSenderId: "620414447517",
+      appId: "1:620414447517:web:d42c5d50a91ff41e5ac974"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // --- BURGER MENU LOGIC ---
+    const burger = document.getElementById('burger-toggle');
+    const navMenu = document.getElementById('nav-menu');
+    burger.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+
+    // --- AUTH LOGIC ---
+    onAuthStateChanged(auth, async (user) => {
+      const signupBtn = document.getElementById('signup-trigger');
+      const logoutBtn = document.getElementById('logout-trigger');
+      const nameTag = document.getElementById('user-name-display');
+      if (user) {
+        signupBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        const snap = await get(ref(db, "users/" + user.uid));
+        if (snap.exists()) {
+          nameTag.innerText = "Hi, " + snap.val().name;
+        }
+      } else {
+        signupBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+        nameTag.innerText = "";
+      }
+    });
+
+    window.handleLogout = () => signOut(auth);
+
+    window.checkAuth = function(event) {
+      const isLoggedIn = !document.getElementById('logout-trigger').classList.contains('hidden');
+      if (!isLoggedIn) {
+        window.location.href = 'index.html';
+        return;
+      }
+      const target = event.currentTarget; 
+      if (target.classList.contains('fa-shopping-cart')) {
+        window.location.href = 'cart.html';
+      } else if (target.classList.contains('fa-user-circle')) {
+        window.location.href = 'user.html';
+      }
+    };
+
+    // --- MENU & PRICE FILTER LOGIC ---
+    const productsByCategory = { cakes: [], pastries: [], custom: [] };
+    const grid = document.getElementById('product-grid');
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    const priceLimitInput = document.getElementById('price-limit');
+    const modal = document.getElementById('productModal');
+    let currentSelectedProduct = null;
+
+    function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+    function saveCart(cart) { localStorage.setItem('cart', JSON.stringify(cart)); updateCartCount(); }
+
+    function addToCart(product) {
+      let cart = getCart();
+      const existing = cart.find(item => item.id === product.id);
+      if (existing) { existing.quantity += 1; } 
+      else { cart.push({ ...product, quantity: 1 }); }
+      saveCart(cart);
+      const btns = document.querySelectorAll(`.btn-add[data-id="${product.id}"]`);
+      btns.forEach(btn => {
+        btn.textContent = "Added ✓";
+        btn.style.backgroundColor = "#27ae60";
+        setTimeout(() => { btn.textContent = "Add to Cart"; btn.style.backgroundColor = "var(--primary)"; }, 1000);
+      });
+    }
+
+    function updateCartCount() {
+      const cart = getCart();
+      const total = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+      document.getElementById('cart-count-header').textContent = total;
+    }
+
+    priceLimitInput.addEventListener('input', () => {
+      const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+      renderProducts(activeCategory);
+    });
+
+    function openProductModal(product) {
+      currentSelectedProduct = product;
+      document.getElementById('modalImg').src = product.image || 'https://via.placeholder.com/300x220?text=No+Image';
+      document.getElementById('modalTitle').textContent = product.name;
+      document.getElementById('modalPrice').textContent = `₱${Number(product.price).toFixed(2)}`;
+      document.getElementById('modalDesc').textContent = product.description || "Freshly baked with love using our premium ingredients.";
+      modal.style.display = 'flex';
+    }
+
+    document.getElementById('closeModal').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('modalAddToCart').onclick = () => { if (currentSelectedProduct) addToCart(currentSelectedProduct); modal.style.display = 'none'; };
+
+    ['cakes', 'pastries', 'custom'].forEach(category => {
+      onValue(ref(db, `products/${category}`), (snapshot) => {
+        const data = snapshot.val();
+        productsByCategory[category] = [];
+        if (data) {
+          Object.entries(data).forEach(([id, product]) => {
+            product.id = id;
+            productsByCategory[category].push(product);
+          });
+        }
+        const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+        if (category === activeCategory) renderProducts(activeCategory);
+      });
+    });
+
+    function renderProducts(category) {
+      grid.innerHTML = '';
+      const maxPrice = parseFloat(priceLimitInput.value) || Infinity;
+      const products = (productsByCategory[category] || []).filter(p => parseFloat(p.price) <= maxPrice);
+      if (products.length === 0) {
+        grid.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No items found within ₱${maxPrice} in this category.</p>`;
+        return;
+      }
+      products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <img src="${product.image || 'https://via.placeholder.com/300x220?text=No+Image'}" alt="${product.name}">
+          <div class="product-info">
+            <h3>${product.name}</h3>
+            <p class="price">₱${Number(product.price).toFixed(2)}</p>
+            <button class="btn-add" data-id="${product.id}">Add to Cart</button>
+          </div>
+        `;
+        card.addEventListener('click', (e) => { if (e.target.tagName !== 'BUTTON') openProductModal(product); });
+        grid.appendChild(card);
+      });
+      document.querySelectorAll('.btn-add').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          let found = null;
+          for (const cat in productsByCategory) { 
+             found = productsByCategory[cat].find(p => p.id === id); 
+             if (found) break; 
+          }
+          if (found) addToCart(found);
+        });
+      });
+    }
+
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        categoryButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderProducts(btn.dataset.category);
+      });
+    });
+
+    updateCartCount();
+  </script>
+</body>
+</html>

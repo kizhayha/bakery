@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - C&N Bakery</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #ff8fab;
+            --primary-dark: #fb6f92;
+            --secondary: #ffe5ec;
+            --text-dark: #4a4a4a;
+            --white: #ffffff;
+            --bg: #fffbfb;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-dark); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: var(--white); padding: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .checkout-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px; }
+
+        .section-card {
+            background: white; border-radius: 20px; padding: 25px;
+            box-shadow: var(--shadow); margin-bottom: 25px;
+        }
+
+        h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--primary-dark); display: flex; align-items: center; gap: 10px; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 10px;
+            font-size: 0.95rem; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+
+        .choice-group { display: flex; gap: 15px; margin-bottom: 20px; }
+        .choice-btn {
+            flex: 1; padding: 15px; border: 2px solid #eee; border-radius: 12px;
+            text-align: center; cursor: pointer; transition: 0.3s; font-weight: 600;
+        }
+        .choice-btn.active { border-color: var(--primary); background: var(--secondary); color: var(--primary-dark); }
+
+        .custom-notice {
+            background: #fff4f7; border-left: 4px solid var(--primary);
+            padding: 15px; border-radius: 8px; font-size: 0.85rem; color: #d63384; margin-bottom: 20px;
+        }
+
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+        .total-row { border-top: 2px dashed #eee; margin-top: 15px; padding-top: 15px; font-weight: 700; color: var(--primary-dark); font-size: 1.2rem; }
+
+        .payment-method { border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 10px; cursor: pointer; }
+        .payment-method.active { border-color: var(--primary); background: #fffafb; }
+        .qr-placeholder { display: none; text-align: center; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 10px; }
+
+        .btn-checkout {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 18px; border-radius: 50px; font-weight: 700; font-size: 1.1rem;
+            cursor: pointer; margin-top: 20px; transition: 0.3s;
+        }
+        .btn-checkout:hover { background: var(--primary-dark); transform: translateY(-2px); }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container" style="display:flex; justify-content:space-between; align-items:center;">
+        <a href="index.html" style="text-decoration:none; color:inherit; font-weight:700; font-size:1.5rem;">C&N <span style="color:var(--primary);">Bakery</span></a>
+        <a href="cart.html" style="color:var(--primary); text-decoration:none; font-weight:600;"><i class="fas fa-arrow-left"></i> Back to Cart</a>
+    </div>
+</header>
+
+<div class="container">
+    <div class="checkout-grid">
+        
+        <div class="info-side">
+            <div id="custom-cake-alert" class="custom-notice hidden">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Custom Cake Detected:</strong> Please choose a date at least 3-7 days from today. Your order requires admin confirmation for the final price and downpayment.
+            </div>
+
+            <div class="section-card">
+                <h2><i class="fas fa-user"></i> Customer Information</h2>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="cust-name" placeholder="Juan Dela Cruz">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="cust-phone" placeholder="0912 345 6789">
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2><i class="fas fa-truck"></i> Fulfillment Method</h2>
+                <div class="choice-group">
+                    <div class="choice-btn active" onclick="setMethod('delivery')">Delivery</div>
+                    <div class="choice-btn" onclick="setMethod('pickup')">Store Pickup</div>
+                </div>
+
+                <div id="address-section" class="form-group">
+                    <label>Delivery Address</label>
+                    <textarea id="cust-address" rows="3" placeholder="Street Name, Barangay, City, Landmark"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label id="date-label">Delivery Date</label>
+                    <input type="date" id="order-date">
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2><i class="fas fa-credit-card"></i> Payment Method</h2>
+                
+                <div class="payment-method active" onclick="setPayment('cod', event)">
+                    <input type="radio" name="pay" id="pay-cod" checked> <label for="pay-cod" style="display:inline; cursor:pointer;">Cash on Delivery / Pickup</label>
+                </div>
+
+                <div class="payment-method" onclick="setPayment('gcash', event)">
+                    <input type="radio" name="pay" id="pay-gcash"> <label for="pay-gcash" style="display:inline; cursor:pointer;">GCash (Number/QR)</label>
+                    <div id="gcash-details" class="qr-placeholder">
+                        <p>GCash Number: <strong>0917-XXX-XXXX</strong></p>
+                        <p style="font-size:0.8rem; color:#888;">Please save a screenshot of your receipt.</p>
+                    </div>
+                </div>
+
+                <div class="payment-method" onclick="setPayment('bank', event)">
+                    <input type="radio" name="pay" id="pay-bank"> <label for="pay-bank" style="display:inline; cursor:pointer;">Bank Transfer</label>
+                    <div id="bank-details" class="qr-placeholder">
+                        <p>BPI Account: <strong>1234-5678-90</strong></p>
+                        <p>Name: <strong>C&N Bakery Corp.</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-side">
+            <div class="section-card">
+                <h2>Order Summary</h2>
+                <div id="summary-items-list"></div>
+
+                <div class="total-row">
+                    <div class="summary-item">
+                        <span>Total Amount</span>
+                        <span id="checkout-total">₱0.00</span>
+                    </div>
+                </div>
+
+                <div id="payment-note" style="margin-top:15px; font-size:0.8rem; color:#666;">
+                    * Full payment required for standard items.
+                </div>
+
+                <button class="btn-checkout" id="btn-place-order">Place Order</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getDatabase, ref, push, set, update } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWUJfDwLR5erpExZUoBWW7YJ-aDpT_zy0",
+      authDomain: "candn-bakery.firebaseapp.com",
+      databaseURL: "https://candn-bakery-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "candn-bakery",
+      storageBucket: "candn-bakery.appspot.com",
+      messagingSenderId: "620414447517",
+      appId: "1:620414447517:web:d42c5d50a91ff41e5ac974"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    let fulfillmentMethod = 'delivery';
+    let hasCustomCake = false;
+
+    // Check Login State
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+        } else {
+            alert("Please login to place an order.");
+            window.location.href = "login.html"; // Adjust to your login page
+        }
+    });
+
+    function initCheckout() {
+        const listContainer = document.getElementById('summary-items-list');
+        let total = 0;
+
+        cart.forEach(item => {
+            if(item.category === 'custom') hasCustomCake = true;
+            total += (item.price * item.quantity);
+            
+            const div = document.createElement('div');
+            div.className = 'summary-item';
+            div.innerHTML = `<span>${item.quantity}x ${item.name}</span><span>₱${(item.price * item.quantity).toLocaleString()}</span>`;
+            listContainer.appendChild(div);
+        });
+
+        document.getElementById('checkout-total').innerText = `₱${total.toLocaleString()}`;
+
+        const dateInput = document.getElementById('order-date');
+        const today = new Date();
+        let minDate = new Date();
+
+        if (hasCustomCake) {
+            document.getElementById('custom-cake-alert').classList.remove('hidden');
+            document.getElementById('payment-note').innerHTML = "<strong>Note:</strong> Custom cakes require admin confirmation. You will receive a message regarding your 50% downpayment once approved.";
+            minDate.setDate(today.getDate() + 4); 
+        } else {
+            minDate.setDate(today.getDate() + 1); 
+        }
+        dateInput.min = minDate.toISOString().split("T")[0];
+    }
+
+    window.setMethod = (method) => {
+        fulfillmentMethod = method;
+        document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        const addr = document.getElementById('address-section');
+        const dateLabel = document.getElementById('date-label');
+        
+        if(method === 'pickup') {
+            addr.classList.add('hidden');
+            dateLabel.innerText = "Pickup Date";
+        } else {
+            addr.classList.remove('hidden');
+            dateLabel.innerText = "Delivery Date";
+        }
+    }
+
+    window.setPayment = (method, event) => {
+        document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        event.currentTarget.querySelector('input').checked = true;
+        
+        document.getElementById('gcash-details').style.display = (method === 'gcash') ? 'block' : 'none';
+        document.getElementById('bank-details').style.display = (method === 'bank') ? 'block' : 'none';
+    }
+
+    async function placeOrder() {
+        if (!currentUser) {
+            alert("Waiting for login session...");
+            return;
+        }
+
+        const name = document.getElementById('cust-name').value;
+        const phone = document.getElementById('cust-phone').value;
+        const date = document.getElementById('order-date').value;
+        const address = document.getElementById('cust-address').value;
+        const paymentRadio = document.querySelector('input[name="pay"]:checked');
+        
+        if(!name || !date || !phone) {
+            alert("Please fill in your name, phone number, and select a date.");
+            return;
+        }
+
+        const btn = document.getElementById('btn-place-order');
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        const orderData = {
+            userId: currentUser.uid, // <--- CRITICAL: Links order to the user
+            customerName: name,
+            phone: phone,
+            date: date,
+            address: fulfillmentMethod === 'pickup' ? "Store Pickup" : address,
+            method: fulfillmentMethod,
+            paymentMethod: paymentRadio.id.replace('pay-', '').toUpperCase(),
+            items: cart,
+            totalAmount: cart.reduce((sum, i) => sum + (i.price * i.quantity), 0),
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            // 1. Save to the main Orders list (for Admin)
+            const newOrderRef = push(ref(db, 'orders'));
+            const orderId = newOrderRef.key;
+            await set(newOrderRef, orderData);
+
+            // 2. Sync to User's Latest Tracking Node (for user.html)
+            const trackingData = { ...orderData, orderId: orderId };
+            await set(ref(db, `orders/${currentUser.uid}/latest`), trackingData);
+
+            if(hasCustomCake) {
+                alert("Order Submitted! Please wait for admin confirmation for your custom cake.");
+            } else {
+                alert("Order Successful! Thank you for ordering with C&N Bakery.");
+            }
+
+            localStorage.removeItem('cart');
+            window.location.href = "user.html"; // Send them directly to their account to see the order
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.disabled = false;
+            btn.innerText = "Place Order";
+        }
+    }
+
+    document.getElementById('btn-place-order').addEventListener('click', placeOrder);
+    initCheckout();
+</script>
+
+</body>
+</html>
