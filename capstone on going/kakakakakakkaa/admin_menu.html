@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>C&N Bakery - Menu Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root { --primary: #ff8fab; --primary-dark: #c9184a; --bg: #fff5f7; --border: #f0e0e5; }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; }
+    
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+    
+    /* Navigation Tabs */
+    .nav-tabs { display: flex; gap: 8px; background: white; padding: 8px; border-radius: 14px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .nav-link { flex: 1; text-align: center; padding: 10px; border-radius: 10px; text-decoration: none; color: #888; font-weight: 600; }
+    .nav-link.active { background: var(--primary-dark); color: white; }
+    
+    /* Cards */
+    .admin-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
+    input, select, textarea { width: 100%; padding: 12px; margin-top: 10px; border: 2px solid var(--border); border-radius: 10px; font-family: inherit; }
+    
+    .btn-main { background: var(--primary-dark); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: 700; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+    .btn-main:hover { opacity: 0.9; transform: translateY(-2px); }
+    .btn-main:disabled { background: #ccc; cursor: not-allowed; }
+
+    #admin-img-preview { max-width: 150px; border-radius: 10px; margin-top: 10px; display: none; border: 2px solid var(--primary); }
+    .file-input-label { display: block; font-size: 0.8rem; font-weight: 600; margin-top: 15px; color: #666; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="nav-tabs">
+    <a href="admin.html" class="nav-link">Home</a>
+    <a href="sales.html" class="nav-link">Sales</a>
+    <a href="orders.html" class="nav-link">Orders</a>
+    <a href="schedule.html" class="nav-link">Schedule</a>
+    <a href="admin_menu.html" class="nav-link active">Menu</a>
+    <a href="history.html" class="nav-link">History</a>
+  </div>
+
+  <div class="admin-card">
+    <h2><i class="fas fa-list-ul"></i> Current Menu Items</h2>
+    
+    <div style="margin: 20px 0; display: flex; gap: 15px; flex-wrap: wrap;">
+      <select id="product-filter-category">
+        <option value="all">All Categories</option>
+        <option value="cakes">Cakes</option>
+        <option value="pastries">Pastries</option>
+        <option value="custom">Custom Bases</option>
+      </select>
+      
+      <input type="text" id="product-search" placeholder="Search by name..." style="flex:1; min-width:200px;">
+    </div>
+
+    <div id="products-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:20px;">
+      </div>
+  </div>
+
+  <div class="admin-card">
+    <h2><i class="fas fa-plus-circle"></i> Add New Product</h2>
+    <form id="add-product-form">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <input type="text" id="name" required placeholder="Product Name">
+        <input type="number" id="price" step="0.01" min="0" required placeholder="Price (₱)">
+      </div>
+
+      <label class="file-input-label">Product Photo:</label>
+      <input type="file" id="image-file" accept="image/*" required>
+      <img id="admin-img-preview" src="" alt="Preview">
+
+      <select id="category" required style="margin:20px 0;">
+        <option value="" disabled selected>Select Category</option>
+        <option value="cakes">Cakes</option>
+        <option value="pastries">Pastries</option>
+        <option value="custom">Custom Cake Base</option>
+      </select>
+
+      <textarea id="description" placeholder="Description (optional)" rows="3"></textarea>
+
+      <button type="submit" id="submit-btn" class="btn-main">Add Product to Menu</button>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getDatabase, ref, push, set, get, remove } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWUJfDwLR5erpExZUoBWW7YJ-aDpT_zy0",
+    authDomain: "candn-bakery.firebaseapp.com",
+    databaseURL: "https://candn-bakery-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "candn-bakery"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let cachedProducts = [];
+  let productBase64 = "";
+
+  // Preview Image Logic
+  document.getElementById('image-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    const preview = document.getElementById('admin-img-preview');
+    reader.onload = () => {
+      productBase64 = reader.result;
+      preview.src = reader.result;
+      preview.style.display = "block";
+    };
+    if(file) reader.readAsDataURL(file);
+  });
+
+  // Fetch and Load Products
+  async function loadProducts() {
+    const container = document.getElementById('products-list');
+    container.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">Loading...</p>';
+
+    const paths = ['products/cakes', 'products/pastries', 'products/custom'];
+    const results = await Promise.all(paths.map(path => get(ref(db, path))));
+    
+    cachedProducts = [];
+    results.forEach((snap, index) => {
+      if (snap.exists()) {
+        snap.forEach(child => {
+          cachedProducts.push({ id: child.key, category: paths[index].split('/')[1], ...child.val() });
+        });
+      }
+    });
+
+    renderFilteredProducts();
+  }
+
+  function renderFilteredProducts() {
+    const container = document.getElementById('products-list');
+    const categoryFilter = document.getElementById('product-filter-category').value;
+    const searchTerm = document.getElementById('product-search').value.toLowerCase();
+
+    let products = cachedProducts.filter(p => {
+      const matchCat = categoryFilter === 'all' || p.category === categoryFilter;
+      const matchSearch = p.name.toLowerCase().includes(searchTerm);
+      return matchCat && matchSearch;
+    });
+
+    container.innerHTML = products.length ? '' : '<p style="text-align:center; width:100%; color:#999;">No products found.</p>';
+    
+    products.forEach(p => {
+      const card = document.createElement('div');
+      card.style.cssText = `background:#fff; border-radius:12px; overflow:hidden; border: 1px solid #eee;`;
+      card.innerHTML = `
+        <img src="${p.image}" style="width:100%; height:150px; object-fit:cover;">
+        <div style="padding:15px;">
+          <h4 style="margin:0;">${p.name}</h4>
+          <div style="color:var(--primary-dark); font-weight:600;">₱${Number(p.price).toFixed(2)}</div>
+          <button class="delete-btn" data-id="${p.id}" data-cat="${p.category}" 
+            style="margin-top:10px; background:#ff4d4d; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">
+            Delete
+          </button>
+        </div>`;
+      container.appendChild(card);
+    });
+  }
+
+  // Handle Deletion
+  document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('delete-btn')) {
+      if (!confirm("Delete this product?")) return;
+      const { id, cat } = e.target.dataset;
+      await remove(ref(db, `products/${cat}/${id}`));
+      loadProducts();
+    }
+  });
+
+  // Handle Add Product Form
+  document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Processing...";
+
+    const cat = document.getElementById('category').value;
+    const data = {
+      name: document.getElementById('name').value,
+      price: document.getElementById('price').value,
+      image: productBase64,
+      description: document.getElementById('description').value,
+      createdAt: Date.now()
+    };
+
+    await set(push(ref(db, `products/${cat}`)), data);
+    alert("Added successfully!");
+    location.reload();
+  });
+
+  // Search and Filter Listeners
+  document.getElementById('product-search').addEventListener('input', renderFilteredProducts);
+  document.getElementById('product-filter-category').addEventListener('change', renderFilteredProducts);
+
+  // Initial Load
+  loadProducts();
+</script>
+</body>
+</html>

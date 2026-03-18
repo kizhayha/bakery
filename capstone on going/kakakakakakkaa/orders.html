@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>C&N Bakery - Orders</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/orders.css">
+  
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <a href="#" class="logo-text">C&N <span>Bakery</span> Admin</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="nav-tabs">
+      <a href="admin.html"        class="nav-link">Home</a>
+      <a href="sales.html"        class="nav-link">Sales</a>
+      <a href="orders.html"       class="nav-link active">Orders</a>
+      <a href="schedule.html"     class="nav-link">Schedule</a>
+      <a href="admin_menu.html"   class="nav-link">Menu</a>
+    </div>
+
+    <div class="orders-grid">
+      <div>
+        <h2 style="color: #e67e22;"><i class="fas fa-pause-circle"></i> New Orders</h2>
+        <div id="pending-list"></div>
+      </div>
+      
+      <div>
+        <h2 style="color: #27ae60;"><i class="fas fa-truck"></i> Active Orders</h2>
+        <div id="active-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div id="orderModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <strong id="modalOrderId"></strong>
+        <span style="cursor:pointer; font-size:1.5rem;" onclick="closeModal()">×</span>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- Zoom Modal for Reference Photo -->
+  <div id="zoomModal">
+    <span id="zoomClose" onclick="closeZoom()">×</span>
+    <img id="zoomImage" src="" alt="Reference Photo Zoom">
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWUJfDwLR5erpExZUoBWW7YJ-aDpT_zy0",
+    authDomain: "candn-bakery.firebaseapp.com",
+    databaseURL: "https://candn-bakery-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "candn-bakery"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const progressSteps = ['preparing', 'baking', 'packing', 'delivery'];
+
+  function getStepIndex(status) {
+    if (['confirmed', 'downpayment-received', 'preparing'].includes(status)) return 0;
+    if (status === 'baking') return 1;
+    if (status === 'packing') return 2;
+    if (status === 'delivery') return 3;
+    return -1;
+  }
+
+  function getOrderTypes(items = []) {
+    if (!items || items.length === 0) return [];
+    const types = new Set();
+    items.forEach(item => {
+      const cat = (item.category || '').trim();
+      if (cat === "Customize Cake" || cat === "Regular Cake" || cat === "Pastries") {
+        types.add(cat);
+      }
+    });
+    return Array.from(types);
+  }
+
+  function hasCustomCake(items = []) {
+    return items.some(i => (i.category || '').trim() === "Customize Cake");
+  }
+
+  function groupItems(items = []) {
+    const groups = { "Customize Cake": [], "Regular Cake": [], "Pastries": [], "Others": [] };
+    items.forEach(item => {
+      const cat = (item.category || '').trim();
+      if (cat === "Customize Cake") groups["Customize Cake"].push(item);
+      else if (cat === "Regular Cake") groups["Regular Cake"].push(item);
+      else if (cat === "Pastries") groups["Pastries"].push(item);
+      else groups["Others"].push(item);
+    });
+    return groups;
+  }
+
+  function getPaymentBadge(status = 'unpaid') {
+    const map = {
+      unpaid:  { text: 'UNPAID',  class: 'badge-unpaid'  },
+      partial: { text: 'PARTIAL', class: 'badge-partial' },
+      paid:    { text: 'PAID',    class: 'badge-paid'    }
+    };
+    const info = map[status] || map.unpaid;
+    return `<span class="payment-badge ${info.class}">${info.text}</span>`;
+  }
+
+  function showZoom(src) {
+    document.getElementById('zoomImage').src = src;
+    document.getElementById('zoomModal').style.display = 'flex';
+  }
+
+  function closeZoom() {
+    document.getElementById('zoomModal').style.display = 'none';
+  }
+
+  function showOrderModal(id, order) {
+    document.getElementById('modalOrderId').textContent = 
+      `#${id.slice(-5)} - ${order.customerName || 'Customer'}`;
+
+    const paymentMethod = order.paymentMethod || 'Not specified';
+    const paymentStatus = order.paymentStatus || 'unpaid';
+    const hasCustom = hasCustomCake(order.items || []);
+
+    let html = `
+      <p><strong>Phone:</strong> ${order.phone || 'N/A'}</p>
+      <p><strong>Total Amount:</strong> ₱${parseFloat(order.totalAmount || 0).toLocaleString('en-PH')}</p>
+      
+      <div class="payment-info">
+        <strong>Payment Method:</strong> ${paymentMethod}<br>
+        <strong>Payment Status:</strong> ${getPaymentBadge(paymentStatus)}
+      </div>
+
+      <p><strong>Status:</strong> <span class="status-badge status-${(order.status||'pending').toLowerCase()}">${(order.status||'pending').toUpperCase()}</span></p>
+      <hr style="margin:20px 0;">
+      <h3 style="margin-bottom:15px;">Order Details</h3>
+    `;
+
+    const groups = groupItems(order.items || []);
+
+    if (groups["Customize Cake"].length > 0) {
+      html += `<div class="order-item-group"><div class="group-title">Customize Cake</div>`;
+      groups["Customize Cake"].forEach(item => {
+        html += `
+          <div class="customize-detail">
+            <h4>${item.quantity || 1}× ${item.name || 'Custom Cake'}</h4>
+            <div class="detail-row"><strong>Layers:</strong> <span>${item.layers || '—'}</span></div>
+            <div class="detail-row"><strong>Flavor:</strong> <span>${item.flavor || '—'}</span></div>
+            <div class="detail-row"><strong>Frosting:</strong> <span>${item.frosting || '—'}</span></div>
+            <div class="detail-row"><strong>Design:</strong> <span>${item.design || '—'}</span></div>
+            ${item.message ? `<div class="detail-row"><strong>Message:</strong> <span>${item.message}</span></div>` : ''}
+            ${item.notes ? `<div class="detail-row"><strong>Notes:</strong> <span>${item.notes}</span></div>` : ''}
+            ${item.referencePhoto && !item.referencePhoto.includes('via.placeholder.com') ? `
+              <div class="ref-photo">
+                <strong>Reference Photo:</strong><br>
+                <img src="${item.referencePhoto}" alt="Reference" 
+                     onclick="showZoom('${item.referencePhoto}')"
+                     onerror="this.src='https://via.placeholder.com/300?text=Image+Error';">
+              </div>` : ''}
+          </div>`;
+      });
+      html += `</div>`;
+    }
+
+    ["Regular Cake", "Pastries"].forEach(g => {
+      if (groups[g].length > 0) {
+        html += `
+          <div class="order-item-group">
+            <div class="group-title">${g}</div>
+            <div class="item-list">`;
+        groups[g].forEach(item => {
+          html += `<div><strong>${item.quantity || 1}×</strong> ${item.name || '—'}</div>`;
+        });
+        html += `</div></div>`;
+      }
+    });
+
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('orderModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('orderModal').style.display = 'none';
+  }
+
+  function renderOrderCard(id, order) {
+    const status = (order.status || 'pending').toLowerCase();
+    const paymentStatus = order.paymentStatus || 'unpaid';
+    const shortId = id.slice(-5);
+    const hasCustom = hasCustomCake(order.items || []);
+    const orderTypes = getOrderTypes(order.items);
+
+    const isPending = status === 'pending';
+    const isActive  = !['pending','cancelled','completed'].includes(status);
+
+    let badgesHTML = orderTypes.map(t => {
+      let c = 'order-type-badge';
+      if (t === "Customize Cake") c += ' badge-customize';
+      if (t === "Regular Cake")   c += ' badge-regular';
+      if (t === "Pastries")       c += ' badge-pastries';
+      return `<span class="${c}">${t}</span>`;
+    }).join(' ');
+
+    let paymentBadge = getPaymentBadge(paymentStatus);
+
+    let buttons = '';
+
+    if (isPending) {
+      if (hasCustom) {
+        if (paymentStatus === 'unpaid') {
+          buttons = `
+            <button class="btn-action btn-downpayment" onclick="event.stopImmediatePropagation(); updatePayment('${id}', 'partial')">Downpayment Received</button>
+            <button class="btn-action" style="color:#c0392b; border-color:#ffcccc;" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'cancelled')">Cancel</button>
+          `;
+        } else if (paymentStatus === 'partial') {
+          buttons = `
+            <button class="btn-action btn-confirm" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'confirmed')">Confirm Order</button>
+            <button class="btn-action" style="color:#c0392b; border-color:#ffcccc;" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'cancelled')">Cancel</button>
+          `;
+        }
+      } else {
+        buttons = `
+          <button class="btn-action btn-confirm" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'confirmed')">Confirm Order</button>
+          <button class="btn-action" style="color:#c0392b; border-color:#ffcccc;" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'cancelled')">Cancel</button>
+        `;
+      }
+    }
+
+    if (isActive) {
+      buttons = `
+        <button class="btn-action" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'preparing')">Prepare</button>
+        <button class="btn-action" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'baking')">Bake</button>
+        <button class="btn-action" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'packing')">Pack</button>
+        <button class="btn-action" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'delivery')">Ship</button>
+        <button class="btn-action" style="color:#c0392b; border-color:#ffcccc;" onclick="event.stopImmediatePropagation(); updateStatus('${id}', 'cancelled')">Cancel</button>
+      `;
+    }
+
+    let stepper = '';
+    if (isActive) {
+      const idx = getStepIndex(status);
+      stepper = `
+        <div class="status-stepper" style="margin: 15px 0; display:flex; justify-content:space-between; max-width:420px;">
+          ${progressSteps.map((step, i) => `
+            <div class="step ${i < idx ? 'completed' : ''} ${i === idx ? 'active' : ''}" style="text-align:center; flex:1;">
+              <div class="step-icon" style="font-size:1.4rem;">${
+                step==='preparing'?'<i class="fas fa-utensils"></i>':
+                step==='baking'?'<i class="fas fa-fire-burner"></i>':
+                step==='packing'?'<i class="fas fa-box"></i>':
+                '<i class="fas fa-truck"></i>'
+              }</div>
+              <div style="font-size:0.8rem; margin-top:4px;">${step}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="order-card" onclick="showOrderModal('${id}', ${JSON.stringify(order).replace(/"/g,'&quot;')})" style="cursor:pointer; margin-bottom:20px; padding:16px; border:1px solid #eee; border-radius:12px; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <strong style="font-size:1.15rem;">#${shortId} - ${order.customerName || 'Customer'}</strong><br>
+            <small style="color:#555;"><i class="fas fa-phone"></i> ${order.phone || '—'}</small>
+          </div>
+          <div style="text-align:right;">
+            ${paymentBadge}<br>
+            <span class="status-badge status-${status}" style="margin-top:6px; display:inline-block;">${status.toUpperCase()}</span>
+          </div>
+        </div>
+
+        <div class="order-type-badges" style="margin:10px 0;">${badgesHTML}</div>
+
+        <div style="margin:12px 0; padding:12px 0; border-top:1px dashed #ddd;">
+          <strong style="color:#e67e22; font-size:1.1rem;">₱${parseFloat(order.totalAmount || 0).toLocaleString('en-PH')}</strong>
+          <div style="margin-top:8px; font-size:0.92rem; color:#444;">
+            ${order.items?.map(i => `${i.quantity||1}× ${i.name}`).join(' • ') || 'No items'}
+          </div>
+        </div>
+
+        ${stepper}
+
+        <div style="margin-top:16px; display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end;">
+          ${buttons}
+        </div>
+      </div>
+    `;
+  }
+
+  onValue(ref(db, 'orders'), (snapshot) => {
+    const orders = snapshot.val() || {};
+    const pending = document.getElementById('pending-list');
+    const active  = document.getElementById('active-list');
+
+    pending.innerHTML = '';
+    active.innerHTML  = '';
+
+    const entries = Object.entries(orders).reverse();
+
+    if (entries.length === 0) {
+      pending.innerHTML = '<p style="text-align:center; color:#999; padding:50px 0;">No orders yet.</p>';
+      return;
+    }
+
+    let hasPending = false;
+    let hasActive  = false;
+
+    entries.forEach(([id, order]) => {
+      const st = (order.status || 'pending').toLowerCase();
+      const card = renderOrderCard(id, order);
+
+      if (st === 'pending') {
+        pending.innerHTML += card;
+        hasPending = true;
+      } else if (!['cancelled','completed'].includes(st)) {
+        active.innerHTML += card;
+        hasActive = true;
+      }
+    });
+
+    if (!hasPending) pending.innerHTML = '<p style="text-align:center; color:#999; padding:40px 0;">No new orders.</p>';
+    if (!hasActive)  active.innerHTML  = '<p style="text-align:center; color:#999; padding:40px 0;">No active orders.</p>';
+  });
+
+  window.updateStatus = (id, newStatus) => {
+    if (!confirm(`Change status to "${newStatus}"?`)) return;
+    update(ref(db, `orders/${id}`), { status: newStatus })
+      .catch(err => alert("Error: " + err.message));
+  };
+
+  window.updatePayment = (id, newPayStatus) => {
+    if (!confirm(`Mark as "${newPayStatus}" payment?`)) return;
+    update(ref(db, `orders/${id}`), { paymentStatus: newPayStatus })
+      .then(() => {
+        if (newPayStatus === 'partial') {
+          // Optional: auto set status to something like 'downpayment-received'
+          update(ref(db, `orders/${id}`), { status: 'downpayment-received' });
+        }
+      })
+      .catch(err => alert("Error: " + err.message));
+  };
+
+  window.showOrderModal = showOrderModal;
+  window.closeModal = closeModal;
+  window.showZoom = showZoom;
+  window.closeZoom = closeZoom;
+</script>
+</body>
+</html>

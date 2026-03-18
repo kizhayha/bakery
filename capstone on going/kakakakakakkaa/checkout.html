@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - C&N Bakery</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #ff8fab;
+            --primary-dark: #fb6f92;
+            --secondary: #ffe5ec;
+            --text-dark: #4a4a4a;
+            --white: #ffffff;
+            --bg: #fffbfb;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-dark); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        header {
+            background: var(--white); padding: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .checkout-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 30px; }
+
+        .section-card {
+            background: white; border-radius: 20px; padding: 25px;
+            box-shadow: var(--shadow); margin-bottom: 25px;
+        }
+
+        h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--primary-dark); display: flex; align-items: center; gap: 10px; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; }
+        input, select, textarea {
+            width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 10px;
+            font-size: 0.95rem; outline: none; transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); }
+
+        .choice-group { display: flex; gap: 15px; margin-bottom: 20px; }
+        .choice-btn {
+            flex: 1; padding: 15px; border: 2px solid #eee; border-radius: 12px;
+            text-align: center; cursor: pointer; transition: 0.3s; font-weight: 600;
+        }
+        .choice-btn.active { border-color: var(--primary); background: var(--secondary); color: var(--primary-dark); }
+
+        .custom-notice {
+            background: #fff4f7; border-left: 4px solid var(--primary);
+            padding: 15px; border-radius: 8px; font-size: 0.85rem; color: #d63384; margin-bottom: 20px;
+        }
+
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+        .total-row { border-top: 2px dashed #eee; margin-top: 15px; padding-top: 15px; font-weight: 700; color: var(--primary-dark); font-size: 1.2rem; }
+
+        .payment-method { 
+            border: 1px solid #eee; border-radius: 12px; padding: 15px; 
+            margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+        }
+        .payment-method.active { border-color: var(--primary); background: #fffafb; }
+
+        .qr-placeholder { 
+            display: none; text-align: center; margin-top: 12px; 
+            padding: 12px; background: #f9f9f9; border-radius: 10px; font-size: 0.9rem;
+        }
+
+        .btn-checkout {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 18px; border-radius: 50px; font-weight: 700; font-size: 1.1rem;
+            cursor: pointer; margin-top: 20px; transition: 0.3s;
+        }
+        .btn-checkout:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn-checkout:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        .hidden { display: none; }
+        .error { color: #e74c3c; font-size: 0.85rem; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container" style="display:flex; justify-content:space-between; align-items:center;">
+        <a href="index.html" style="text-decoration:none; color:inherit; font-weight:700; font-size:1.5rem;">C&N <span style="color:var(--primary);">Bakery</span></a>
+        <a href="cart.html" style="color:var(--primary); text-decoration:none; font-weight:600;"><i class="fas fa-arrow-left"></i> Back to Cart</a>
+    </div>
+</header>
+
+<div class="container">
+    <div class="checkout-grid">
+        
+        <div class="info-side">
+            <div id="custom-cake-alert" class="custom-notice hidden">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Custom Cake in Order:</strong><br>
+                • Requires admin approval<br>
+                • Lead time: at least 4–7 days<br>
+                • 50% downpayment needed after confirmation
+            </div>
+
+            <div class="section-card">
+                <h2><i class="fas fa-user"></i> Customer Information</h2>
+                <div class="form-group">
+                    <label>Full Name <span style="color:#e74c3c;">*</span></label>
+                    <input type="text" id="cust-name" placeholder="Juan Dela Cruz" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number <span style="color:#e74c3c;">*</span></label>
+                    <input type="tel" id="cust-phone" placeholder="09123456789" required>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2><i class="fas fa-truck"></i> Fulfillment Method</h2>
+                <div class="choice-group">
+                    <div class="choice-btn active" data-method="delivery">Delivery</div>
+                    <div class="choice-btn" data-method="pickup">Store Pickup</div>
+                </div>
+
+                <div id="address-section" class="form-group">
+                    <label>Delivery Address <span style="color:#e74c3c;">*</span></label>
+                    <textarea id="cust-address" rows="3" placeholder="Street, Barangay, City, Landmark / Notes" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label id="date-label">Delivery / Pickup Date <span style="color:#e74c3c;">*</span></label>
+                    <input type="date" id="order-date" required>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2><i class="fas fa-credit-card"></i> Payment Method</h2>
+                
+                <div class="payment-method active" data-payment="cod">
+                    <input type="radio" name="pay" id="pay-cod" value="cod" checked> 
+                    <label for="pay-cod" style="display:inline; cursor:pointer;">Cash on Delivery / Pickup</label>
+                </div>
+
+                <div class="payment-method" data-payment="gcash">
+                    <input type="radio" name="pay" id="pay-gcash" value="gcash"> 
+                    <label for="pay-gcash" style="display:inline; cursor:pointer;">GCash</label>
+                    <div id="gcash-details" class="qr-placeholder">
+                        GCash Number: <strong>0917-XXX-XXXX</strong><br>
+                        <small style="color:#555;">Send payment & save screenshot of receipt</small>
+                    </div>
+                </div>
+
+                <div class="payment-method" data-payment="bank">
+                    <input type="radio" name="pay" id="pay-bank" value="bank"> 
+                    <label for="pay-bank" style="display:inline; cursor:pointer;">Bank Transfer</label>
+                    <div id="bank-details" class="qr-placeholder">
+                        BPI Account: <strong>1234-5678-90</strong><br>
+                        Account Name: <strong>C&N Bakery Corp.</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-side">
+            <div class="section-card">
+                <h2>Order Summary</h2>
+                <div id="summary-items-list"></div>
+
+                <div class="total-row">
+                    <div class="summary-item">
+                        <span>Total Amount</span>
+                        <span id="checkout-total">₱0.00</span>
+                    </div>
+                </div>
+
+                <div id="payment-note" style="margin-top:16px; font-size:0.88rem; color:#555; line-height:1.4;">
+                    * Full payment required for regular items & pastries.<br>
+                    * Custom cakes require 50% downpayment after admin approval.
+                </div>
+
+                <button class="btn-checkout" id="btn-place-order" disabled>Place Order</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWUJfDwLR5erpExZUoBWW7YJ-aDpT_zy0",
+      authDomain: "candn-bakery.firebaseapp.com",
+      databaseURL: "https://candn-bakery-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "candn-bakery",
+      storageBucket: "candn-bakery.appspot.com",
+      messagingSenderId: "620414447517",
+      appId: "1:620414447517:web:d42c5d50a91ff41e5ac974"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    let fulfillmentMethod = 'delivery';
+    let selectedPayment = 'cod';
+    let hasCustomCake = false;
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+        } else {
+            alert("Please login to place an order.");
+            window.location.href = "login.html";
+        }
+    });
+
+    function getItemCategory(item) {
+        const name = (item.name || '').toLowerCase().trim();
+        const cat = (item.category || '').toLowerCase().trim();
+
+        if (cat.includes('custom') || name.includes('custom')) return "Customize Cake";
+        if (cat.includes('pastry') || ['bread','cookie','tart','pie','donut','muffin','brownie','croissant','eclair'].some(w => name.includes(w))) {
+            return "Pastries";
+        }
+        if (cat.includes('cake') || (name.includes('cake') && !name.includes('custom'))) {
+            return "Regular Cake";
+        }
+        return "Others";
+    }
+
+    function updateButtonState() {
+        const name = document.getElementById('cust-name').value.trim();
+        const phone = document.getElementById('cust-phone').value.trim();
+        const date = document.getElementById('order-date').value;
+        const address = document.getElementById('cust-address').value.trim();
+        const btn = document.getElementById('btn-place-order');
+
+        const isDelivery = fulfillmentMethod === 'delivery';
+        const addressOk = !isDelivery || address.length > 10;
+
+        btn.disabled = !(name && phone && date && addressOk);
+    }
+
+    function initCheckout() {
+        const list = document.getElementById('summary-items-list');
+        let total = 0;
+        hasCustomCake = false;
+
+        list.innerHTML = '';
+
+        cart.forEach(item => {
+            const cat = getItemCategory(item);
+            if (cat === "Customize Cake") hasCustomCake = true;
+
+            total += item.price * item.quantity;
+
+            const div = document.createElement('div');
+            div.className = 'summary-item';
+            div.innerHTML = `
+                <span>${item.quantity}× ${item.name} 
+                    <small style="color:#e67e22;">(${cat})</small>
+                </span>
+                <span>₱${(item.price * item.quantity).toLocaleString()}</span>`;
+            list.appendChild(div);
+        });
+
+        document.getElementById('checkout-total').innerText = `₱${total.toLocaleString('en-PH')}`;
+
+        // Set min date
+        const today = new Date();
+        const minDays = hasCustomCake ? 4 : 1;
+        let minDate = new Date(today);
+        minDate.setDate(today.getDate() + minDays);
+
+        const dateInput = document.getElementById('order-date');
+        dateInput.min = minDate.toISOString().split('T')[0];
+
+        // Show/hide custom notice & update note
+        if (hasCustomCake) {
+            document.getElementById('custom-cake-alert').classList.remove('hidden');
+        }
+
+        updateButtonState();
+    }
+
+    // Event listeners
+    document.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fulfillmentMethod = btn.dataset.method;
+
+            const addrSection = document.getElementById('address-section');
+            const dateLabel = document.getElementById('date-label');
+
+            if (fulfillmentMethod === 'pickup') {
+                addrSection.classList.add('hidden');
+                dateLabel.textContent = "Pickup Date *";
+            } else {
+                addrSection.classList.remove('hidden');
+                dateLabel.textContent = "Delivery Date *";
+            }
+            updateButtonState();
+        });
+    });
+
+    document.querySelectorAll('.payment-method').forEach(el => {
+        el.addEventListener('click', () => {
+            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
+            el.classList.add('active');
+            selectedPayment = el.dataset.payment;
+
+            document.getElementById('gcash-details').style.display = selectedPayment === 'gcash' ? 'block' : 'none';
+            document.getElementById('bank-details').style.display = selectedPayment === 'bank' ? 'block' : 'none';
+        });
+    });
+
+    // Real-time validation
+    ['cust-name','cust-phone','order-date','cust-address'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateButtonState);
+    });
+
+    async function placeOrder() {
+        if (!currentUser) return alert("Login session issue. Please refresh.");
+
+        const name    = document.getElementById('cust-name').value.trim();
+        const phone   = document.getElementById('cust-phone').value.trim();
+        const date    = document.getElementById('order-date').value;
+        const address = document.getElementById('cust-address').value.trim();
+
+        if (!name || !phone || !date || (fulfillmentMethod === 'delivery' && address.length < 10)) {
+            alert("Please complete all required fields.");
+            return;
+        }
+
+        const btn = document.getElementById('btn-place-order');
+        btn.disabled = true;
+        btn.innerText = "Submitting...";
+
+        const itemsWithCategory = cart.map(item => ({
+            ...item,
+            category: getItemCategory(item),
+            // flatten custom details if still nested (backward compat)
+            ...(item.customDetails ? {
+                layers:   item.customDetails.layers   || '',
+                flavor:   item.customDetails.flavor   || '',
+                frosting: item.customDetails.frosting || '',
+                design:   item.customDetails.design   || '',
+                message:  item.customDetails.message  || '',
+                notes:    item.customDetails.notes    || '',
+            } : {})
+        }));
+
+        const orderData = {
+            userId: currentUser.uid,
+            customerName: name,
+            phone: phone,
+            date: date,
+            address: fulfillmentMethod === 'pickup' ? "Store Pickup" : address,
+            method: fulfillmentMethod,
+            paymentMethod: selectedPayment,           // "cod", "gcash", "bank"
+            paymentStatus: hasCustomCake ? 'unpaid' : 'paid',   // key line for orders.html logic
+            items: itemsWithCategory,
+            totalAmount: cart.reduce((sum, i) => sum + (i.price * i.quantity), 0),
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            const newOrderRef = push(ref(db, 'orders'));
+            await set(newOrderRef, orderData);
+
+            await set(ref(db, `users/${currentUser.uid}/latestOrder`), {
+                ...orderData,
+                orderId: newOrderRef.key
+            });
+
+            alert(hasCustomCake 
+                ? "Order submitted!\n\nCustom cake orders require admin review.\nYou will be contacted for confirmation & downpayment instructions."
+                : "Thank you! Your order has been placed successfully."
+            );
+
+            localStorage.removeItem('cart');
+            window.location.href = "user.html";
+        } catch (err) {
+            alert("Error placing order:\n" + err.message);
+            btn.disabled = false;
+            btn.innerText = "Place Order";
+        }
+    }
+
+    document.getElementById('btn-place-order').addEventListener('click', placeOrder);
+    initCheckout();
+</script>
+
+</body>
+</html> 

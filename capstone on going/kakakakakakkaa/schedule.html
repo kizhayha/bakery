@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>C&N Bakery - Schedule</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --primary: #ff8fab; 
+      --primary-dark: #c9184a; 
+      --bg: #fff5f7;
+      --card: #ffffff; 
+      --text: #2d2d2d; 
+      --muted: #888; 
+      --border: #f0e0e5;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      min-height: 100vh; 
+    }
+    
+    header { 
+      background: linear-gradient(90deg, var(--primary-dark), #ff4d6d); 
+      color: white; 
+      padding: 0 24px; 
+      height: 60px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+      box-shadow: 0 4px 20px rgba(201,24,74,0.25); 
+    }
+    
+    .logo-text { font-size: 1.3rem; font-weight: 700; color: white; text-decoration: none; }
+    .logo-text span { color: #ffe0ea; }
+    
+    .container { 
+      max-width: 1280px; 
+      margin: 0 auto; 
+      padding: 24px 20px; 
+    }
+    
+    .nav-tabs { 
+      display: flex; 
+      gap: 8px; 
+      background: white; 
+      padding: 8px; 
+      border-radius: 14px; 
+      margin-bottom: 24px; 
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); 
+      overflow-x: auto;
+    }
+    
+    .nav-link { 
+      flex: 1; 
+      text-align: center; 
+      padding: 10px 12px; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 0.88rem; 
+      color: var(--muted); 
+      text-decoration: none; 
+      transition: all 0.2s; 
+      white-space: nowrap;
+    }
+    
+    .nav-link:hover { background: var(--bg); color: var(--primary-dark); }
+    .nav-link.active { background: linear-gradient(135deg, var(--primary-dark), #ff4d6d); color: white; }
+
+    .admin-card { 
+      background: var(--card); 
+      border-radius: 16px; 
+      padding: 24px; 
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06); 
+      margin-bottom: 20px; 
+    }
+    
+    .calendar-header { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      margin-bottom: 16px; 
+    }
+    
+    .calendar-grid { 
+      display: grid; 
+      grid-template-columns: repeat(7, 1fr); 
+      gap: 4px; 
+    }
+    
+    .day-label { 
+      text-align: center; 
+      font-size: 0.72rem; 
+      font-weight: 600; 
+      color: var(--muted); 
+      padding: 6px 0; 
+    }
+    
+    .cal-day { 
+      aspect-ratio: 1; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 0.82rem; 
+      transition: background 0.2s; 
+      position: relative; 
+      border: 1px solid transparent;
+    }
+    
+    .cal-day:hover { background: var(--bg); border-color: var(--border); }
+    
+    .cal-day.has-booking { 
+      background: #fff0f3; 
+      font-weight: 700; 
+      color: var(--primary-dark); 
+      border-color: #ffdce5;
+    }
+    
+    .dot-container { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary-dark); }
+
+    .order-card { 
+      background: var(--bg); 
+      border-radius: 12px; 
+      padding: 14px; 
+      margin-bottom: 12px; 
+      border: 1px solid var(--border); 
+    }
+    
+    .status-badge { 
+      font-size: 0.7rem; 
+      font-weight: 600; 
+      padding: 3px 10px; 
+      border-radius: 99px; 
+      text-transform: capitalize; 
+      margin-left: 8px;
+    }
+    
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-accepted { background: #d1e7ff; color: #004085; }
+    
+    .btn-action { 
+      background: white; 
+      border: 1.5px solid var(--border); 
+      color: var(--text); 
+      padding: 8px 15px; 
+      border-radius: 8px; 
+      font-size: 0.85rem; 
+      font-weight: 600; 
+      cursor: pointer; 
+    }
+    
+    ul { list-style: none; margin-top: 5px; font-size: 0.85rem; color: #555; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <a href="#" class="logo-text">C&N <span>Bakery</span> Admin</a>
+    </div>
+  </header>
+
+<div class="container">
+  <div class="nav-tabs">
+    <a href="admin.html" class="nav-link">Home</a>
+    <a href="sales.html" class="nav-link">Sales</a>
+    <a href="orders.html" class="nav-link">Orders</a>
+    <a href="schedule.html" class="nav-link active">Schedule</a>
+    <a href="admin_menu.html" class="nav-link">Menu</a>
+     <a href="history.html" class="nav-link active">History</a>
+  </div>
+
+  <div id="schedule-sec">
+    <div class="admin-card">
+      <div class="calendar-header">
+        <button class="btn-action" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="calendar-month-year" style="margin:0;font-size:1.1rem;">Month Year</h2>
+        <button class="btn-action" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+
+    <div class="admin-card">
+      <h2 style="font-size: 1.15rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 18px;">
+        <i class="fas fa-clock"></i> Daily Schedule
+      </h2>
+      <div id="day-orders-list">
+        <p style="color:#999;font-style:italic;">Select a date to view bookings.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCWUJfDwLR5erpExZUoBWW7YJ-aDpT_zy0",
+    authDomain: "candn-bakery.firebaseapp.com",
+    databaseURL: "https://candn-bakery-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "candn-bakery"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let currentViewDate = new Date();
+  let allOrders = {};
+
+  // Fetch orders from Firebase
+  onValue(ref(db, 'orders'), (snapshot) => {
+    allOrders = snapshot.val() || {};
+    renderCalendar();
+  });
+
+  window.changeMonth = (off) => { 
+    currentViewDate.setMonth(currentViewDate.getMonth() + off); 
+    renderCalendar(); 
+  };
+
+  function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const title = document.getElementById('calendar-month-year');
+    grid.innerHTML = '';
+    
+    const y = currentViewDate.getFullYear();
+    const m = currentViewDate.getMonth();
+    
+    title.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
+    
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+      grid.innerHTML += `<div class="day-label">${d}</div>`;
+    });
+    
+    const startDay = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    
+    // Empty slots for previous month
+    for (let x = 0; x < startDay; x++) grid.innerHTML += `<div></div>`;
+    
+    // Fill days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      
+      // Filter orders for this specific date
+      const dayOrders = Object.values(allOrders).filter(o => o.date === dStr);
+      
+      const div = document.createElement('div');
+      div.className = `cal-day ${dayOrders.length ? 'has-booking' : ''}`;
+      div.innerHTML = `
+        <span>${d}</span>
+        <div class="dot-container">
+          ${dayOrders.map(() => '<span class="dot"></span>').join('')}
+        </div>
+      `;
+      div.onclick = () => viewDay(dStr);
+      grid.appendChild(div);
+    }
+  }
+
+  window.viewDay = (date) => {
+    const list = document.getElementById('day-orders-list');
+    const orders = Object.values(allOrders).filter(o => o.date === date);
+    
+    if (orders.length === 0) {
+      list.innerHTML = `<p style="color:#999;">No bookings for ${date}.</p>`;
+      return;
+    }
+
+    list.innerHTML = `<h3 style="margin-bottom:15px; font-size:1rem;">Bookings for ${date}:</h3>`;
+    
+    orders.forEach(o => {
+      const orderDiv = document.createElement('div');
+      orderDiv.className = 'order-card';
+      
+      const itemsList = Array.isArray(o.items) ? o.items : Object.values(o.items || {});
+      
+      orderDiv.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <strong>${o.customerName || 'Guest Customer'}</strong>
+          <span class="status-badge status-${(o.status || 'pending').toLowerCase()}">${o.status || 'pending'}</span>
+        </div>
+        <p style="font-size:0.8rem; color:#666; margin-top:4px;"><i class="fas fa-phone"></i> ${o.phone || 'N/A'}</p>
+        <ul>
+          ${itemsList.map(i => `<li>• ${i.quantity}x ${i.name}</li>`).join('')}
+        </ul>
+      `;
+      list.appendChild(orderDiv);
+    });
+  };
+
+  // Initial Render
+  renderCalendar();
+</script>
+</body>
+</html>

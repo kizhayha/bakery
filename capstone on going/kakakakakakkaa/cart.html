@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Your Cart - C&N Bakery</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/cart.css" />
+</head>
+<body>
+
+    <header>
+        <div class="container nav-flex">
+            <a href="index.html" class="logo-text">C&N <span>Bakery</span></a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="menu.html">Menu</a></li>
+                    <li><a href="faq.html">FAQ</a></li>
+                </ul>
+            </nav>
+            <div class="auth-area">
+                <div class="nav-icons">
+                    <i class="fas fa-shopping-cart" onclick="location.href='cart.html'">
+                        <span id="cart-count-header">0</span>
+                    </i>
+                    <i class="fas fa-user-circle" onclick="location.href='user.html'"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">Your <span>Sweet Cart</span></h1>
+        <div class="cart-container">
+            <div id="cart-grid-wrapper" class="cart-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const gridWrapper = document.getElementById('cart-grid-wrapper');
+        const countHeader = document.getElementById('cart-count-header');
+
+        let selectedIndices = [];
+
+        function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+        function saveCart(cart) { 
+            localStorage.setItem('cart', JSON.stringify(cart)); 
+            updateHeaderCount(); 
+        }
+
+        function updateHeaderCount() {
+            const cart = getCart();
+            const count = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+            if (countHeader) countHeader.textContent = count;
+        }
+
+        function toggleSelect(index) {
+            const pos = selectedIndices.indexOf(index);
+            if (pos > -1) {
+                selectedIndices.splice(pos, 1);
+            } else {
+                selectedIndices.push(index);
+            }
+            renderCart(false); 
+        }
+
+        function renderCart(resetSelection = true) {
+            const cart = getCart();
+            gridWrapper.innerHTML = '';
+
+            if(resetSelection) selectedIndices = [];
+
+            if (cart.length === 0) {
+                gridWrapper.innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fas fa-cookie-bite"></i>
+                        <h2>Your cart is empty</h2>
+                        <button class="btn-primary" onclick="location.href='menu.html'" style="width:auto; padding:12px 40px; margin-top:20px;">Browse Menu</button>
+                    </div>`;
+                return;
+            }
+
+            const itemsList = document.createElement('div');
+            itemsList.className = 'cart-items-list';
+            let selectedSubtotal = 0;
+
+            cart.forEach((item, index) => {
+                const isChecked = selectedIndices.includes(index);
+                const itemTotal = (item.price || 0) * (item.quantity || 1);
+                
+                if (isChecked) selectedSubtotal += itemTotal;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'cart-item-wrapper';
+                wrapper.innerHTML = `
+                    <input type="checkbox" class="item-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelect(${index})">
+                    <div class="cart-item">
+                        <img src="${item.image || 'https://via.placeholder.com/110?text=Cake'}" alt="${item.name}">
+                        <div class="item-details">
+                            <h3>${item.name}</h3>
+                            ${item.customDetails ? `
+                                <p class="custom-info">🍰 ${item.customDetails.flavor} | 🍦 ${item.customDetails.frosting}</p>
+                            ` : '<p class="custom-info">Freshly baked daily</p>'}
+                            <div class="price-row">
+                                <div class="price">₱${Number(itemTotal).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                                <div class="quantity-controls">
+                                    <button onclick="changeQuantity(${index}, -1)">−</button>
+                                    <span>${item.quantity || 1}</span>
+                                    <button onclick="changeQuantity(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                            <button class="remove-btn" onclick="removeItem(${index})"><i class="fas fa-trash-alt"></i> Remove</button>
+                        </div>
+                    </div>`;
+                itemsList.appendChild(wrapper);
+            });
+
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'cart-summary';
+            summaryDiv.innerHTML = `
+                <h2 style="margin-bottom:20px;">Order Summary</h2>
+                <div class="summary-row">
+                    <span>Selected Items</span>
+                    <span>${selectedIndices.length}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>₱${selectedSubtotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total Amount</span>
+                    <span>₱${selectedSubtotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                </div>
+                <button class="btn-primary" 
+                        ${selectedIndices.length === 0 ? 'disabled' : ''} 
+                        onclick="proceedToCheckout()">
+                    Proceed to Checkout (${selectedIndices.length})
+                </button>
+                <p style="text-align:center; font-size:0.8rem; color:#bbb; margin-top:15px;">
+                    ${selectedIndices.length === 0 ? 'Please select items to checkout' : 'Shipping calculated at next step'}
+                </p>
+            `;
+
+            gridWrapper.appendChild(itemsList);
+            gridWrapper.appendChild(summaryDiv);
+        }
+
+        window.changeQuantity = function(index, delta) {
+            let cart = getCart();
+            cart[index].quantity = Math.max(1, (cart[index].quantity || 1) + delta);
+            saveCart(cart);
+            renderCart(false);
+        };
+
+        window.removeItem = function(index) {
+            let cart = getCart();
+            cart.splice(index, 1);
+            saveCart(cart);
+            renderCart(true);
+        };
+
+        // FINAL FIX: This prevents the browser from crashing due to large images
+        window.proceedToCheckout = function() {
+            const cart = getCart();
+            
+            // Create a "clean" version of items for checkout
+            // We strip the heavy image data here so it fits in LocalStorage
+            const itemsToBuy = selectedIndices.map(index => {
+                const item = cart[index];
+                return {
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    // Passing a tiny placeholder instead of the original heavy image
+                    image: 'https://via.placeholder.com/110?text=Bakery+Item', 
+                    customDetails: item.customDetails
+                };
+            });
+
+            try {
+                // Clear old data to make space
+                localStorage.removeItem('checkoutItems');
+                
+                // Save and Redirect
+                localStorage.setItem('checkoutItems', JSON.stringify(itemsToBuy));
+                window.location.href = 'checkout.html';
+            } catch (error) {
+                console.error("Storage Error:", error);
+                alert("Something went wrong with the data. We are proceeding with basic item info.");
+                
+                // Absolute last resort: minimal data
+                const minimalItems = selectedIndices.map(index => ({
+                    name: cart[index].name,
+                    price: cart[index].price,
+                    quantity: cart[index].quantity
+                }));
+                localStorage.setItem('checkoutItems', JSON.stringify(minimalItems));
+                window.location.href = 'checkout.html';
+            }
+        };
+
+        renderCart();
+        updateHeaderCount();
+    </script>
+</body>
+</html>

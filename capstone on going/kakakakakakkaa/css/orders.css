@@ -1,0 +1,551 @@
+:root {
+    --primary: #ff8fab;
+    --primary-dark: #c9184a;
+    --bg: #fff5f7;
+    --card: #ffffff;
+    --border: #f0e0e5;
+    --step-current: #ff8fab;
+    --step-complete: #28a745;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: #2d2d2d;
+}
+
+header {
+    background: linear-gradient(90deg, var(--primary-dark), #ff4d6d);
+    color: white;
+    padding: 15px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 8px;
+    background: white;
+    padding: 8px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    overflow-x: auto;
+}
+
+.nav-link {
+    flex: 1;
+    text-align: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #888;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, var(--primary-dark), #ff4d6d);
+    color: white;
+}
+
+.orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.order-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.status-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-confirmed {
+    background: #d1e7ff;
+    color: #004085;
+}
+
+.status-preparing {
+    background: #e2d9f3;
+    color: #512da8;
+}
+
+.status-baking {
+    background: #ffe5b4;
+    color: #8a4b00;
+}
+
+.status-packing {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-delivering {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-ready {
+    background: #c3e6cb;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-action {
+    background: white;
+    border: 1.5px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 5px;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    transition: 0.2s;
+}
+
+.btn-confirm {
+    background: var(--primary-dark);
+    color: white;
+    border: none;
+}
+
+.btn-paid {
+    background: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-downpayment {
+    background: #ffc107;
+    color: #212529;
+    border: none;
+}
+
+.btn-unpaid {
+    background: #dc3545;
+    color: white;
+    border: none;
+}
+
+/* Active order step buttons */
+.btn-step {
+    background: #f0f0f0;
+    border-color: #ddd;
+}
+
+.btn-step.current {
+    background: var(--step-current);
+    color: white;
+}
+
+.btn-step.complete {
+    background: var(--step-complete);
+    color: white;
+}
+
+.btn-action:hover {
+    opacity: 0.85;
+}
+
+@media (max-width: 600px) {
+    .orders-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Inline styles – move to orders.css later if preferred */
+.order-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #eee;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-confirmed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-preparing {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-baking {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-packing {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.status-delivery {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-action {
+    padding: 8px 14px;
+    margin: 4px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-confirm {
+    background: #27ae60;
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-action:hover {
+    opacity: 0.9;
+}
+
+.status-stepper {
+    display: flex;
+    justify-content: space-between;
+    margin: 24px 0 16px;
+    position: relative;
+}
+
+.status-stepper::before {
+    content: "";
+    position: absolute;
+    top: 22px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #eee;
+    z-index: 1;
+}
+
+.step {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+.step-icon {
+    width: 44px;
+    height: 44px;
+    background: #f5f5f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-size: 1.1rem;
+    color: #777;
+    border: 3px solid #eee;
+    background: white;
+}
+
+.step.active .step-icon {
+    border-color: #e67e22;
+    color: #e67e22;
+    background: #fff9f2;
+}
+
+.step.completed .step-icon {
+    background: #27ae60;
+    color: white;
+    border-color: #27ae60;
+}
+
+.step-text {
+    font-size: 0.82rem;
+    color: #555;
+    font-weight: 500;
+}
+
+.step.completed .step-text,
+.step.active .step-text {
+    color: #222;
+    font-weight: 600;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 560px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    background: #e67e22;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Zoom modal for reference photo */
+#zoomModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1100;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#zoomModal img {
+    max-width: 95%;
+    max-height: 90vh;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    object-fit: contain;
+}
+
+#zoomClose {
+    position: absolute;
+    top: 25px;
+    right: 30px;
+    color: white;
+    font-size: 3rem;
+    cursor: pointer;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.order-item-group {
+    margin-bottom: 20px;
+}
+
+.group-title {
+    font-weight: 700;
+    color: #e67e22;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+.customize-detail {
+    background: #fff8f0;
+    border: 2px solid #c0392b;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.customize-detail h4 {
+    margin: 0 0 10px 0;
+    color: #c0392b;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed #ddd;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.ref-photo {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.ref-photo img {
+    max-width: 100%;
+    border-radius: 8px;
+    border: 2px solid #e67e22;
+    max-height: 280px;
+    object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.ref-photo img:hover {
+    transform: scale(1.03);
+}
+
+.item-list {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.item-list div {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.item-list div:last-child {
+    border-bottom: none;
+}
+
+.order-type-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.order-type-badge {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.badge-customize {
+    background: #c0392b;
+    color: white;
+}
+
+.badge-regular {
+    background: #e67e22;
+    color: white;
+}
+
+.badge-pastries {
+    background: #27ae60;
+    color: white;
+}
+
+/* Payment styling */
+.payment-info {
+    margin: 12px 0;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.payment-badge {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-left: 8px;
+}
+
+.badge-unpaid {
+    background: #e74c3c;
+    color: white;
+}
+
+.badge-partial {
+    background: #f39c12;
+    color: white;
+}
+
+.badge-paid {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-downpayment {
+    background: #8e44ad;
+    color: white;
+    border: none;
+}
+
+.btn-downpayment:hover {
+    background: #732d91;
+}
